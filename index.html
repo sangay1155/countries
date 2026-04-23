@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Atlas | Data Explorer</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #38bdf8;
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .atlas-card {
+            background: var(--card);
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg);
+            color: white;
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .flag-frame {
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .flag-img {
+            max-height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4);
+        }
+
+        h2 { font-size: 2rem; margin-bottom: 0.5rem; color: var(--accent); }
+
+        .data-point {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.95rem;
+        }
+
+        .data-label { color: var(--text-dim); }
+
+        .loader { animation: spin 1s linear infinite; font-size: 1.5rem; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="atlas-card">
+        <select id="selector">
+            <option value="bhutan">Bhutan 🇧🇹</option>
+            <option value="japan">Japan 🇯🇵</option>
+            <option value="brazil">Brazil 🇧🇷</option>
+            <option value="iceland">Iceland 🇮🇸</option>
+        </select>
+
+        <div id="display-area">
+            </div>
+    </div>
+
+    <script>
+        const view = document.getElementById("display-area");
+        const menu = document.getElementById("selector");
+
+        const getCountryData = async (name) => {
+            view.innerHTML = '<div class="loader">⌛</div>';
+
+            try {
+                const res = await fetch(`https://restcountries.com/v3.1/name/${name}`);
+                if (!res.ok) throw new Error("API Failure");
+
+                const [info] = await res.json(); // Destructuring first array item
+                
+                // Constructing the UI
+                view.innerHTML = `
+                    <div class="flag-frame">
+                        <img class="flag-img" src="${info.flags.svg}" alt="Flag">
+                    </div>
+                    <h2>${info.name.common}</h2>
+                    <div class="data-point">
+                        <span class="data-label">Capital</span>
+                        <span>${info.capital?.[0] || 'N/A'}</span>
+                    </div>
+                    <div class="data-point">
+                        <span class="data-label">Population</span>
+                        <span>${info.population.toLocaleString()}</span>
+                    </div>
+                    <div class="data-point">
+                        <span class="data-label">Region</span>
+                        <span>${info.region}</span>
+                    </div>
+                `;
+            } catch (err) {
+                view.innerHTML = `<p style="color: #f87171">Error connecting to Atlas.</p>`;
+            }
+        };
+
+        // Initialize & Listen
+        getCountryData(menu.value);
+        menu.onchange = (e) => getCountryData(e.target.value);
+    </script>
+</body>
+</html>
